@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '16.x'
-      - run: npm cigit st
+      - run: npm ci
       - run: npm run build
       - name: Create Release
         id: create_release
