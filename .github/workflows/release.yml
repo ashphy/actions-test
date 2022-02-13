@@ -41,7 +41,7 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
 
-      - run: cd build && zip -r jsonpath-online-evaluator.zip .
+      - run: zip -r jsonpath-online-evaluator.zip .
 
       - name: Create Release
         id: create_release
@@ -61,7 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/jsonpath-online-evaluator.zip
+          asset_path: jsonpath-online-evaluator.zip
           asset_name: jsonpath-online-evaluator.zip
           asset_content_type: application/zip
 
@@ -86,7 +86,7 @@ jobs:
 
       - name: Copy files to the website with the AWS CLI
         run: |
-          aws s3 sync build s3://ashphy-deploy-test
+          aws s3 sync . s3://ashphy-deploy-test
 
   push_to_registry:
     name: Push Docker image to Docker Hub
