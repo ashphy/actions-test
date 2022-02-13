@@ -38,6 +38,9 @@ jobs:
         with:
           name: build
 
+      - name: Display structure of downloaded files
+        run: ls -R
+
       - run: cd build && zip -r jsonpath-online-evaluator.zip .
 
       - name: Create Release
