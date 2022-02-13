@@ -7,17 +7,39 @@ on:
 
 jobs:
   build:
-    name: Upload Release Asset
+    name: Test and Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
           node-version: '16.x'
+
       - run: npm ci
       - run: npm run build
+
+      - name: Archive assets
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: build
+          retention-days: 1
+
+  create_realease:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download assets
+        uses: actions/download-artifact@v2
+        with:
+          name: build
+
+      - run: cd build && zip -r jsonpath-online-evaluator.zip .
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -28,7 +50,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      - run: cd build && zip -r jsonpath-online-evaluator.zip .
+
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
@@ -39,6 +61,29 @@ jobs:
           asset_path: ./build/jsonpath-online-evaluator.zip
           asset_name: jsonpath-online-evaluator.zip
           asset_content_type: application/zip
+
+  publish_to_s3:
+    name: Upload to Amazon S3
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Download assets
+        uses: actions/download-artifact@v2
+        with:
+          name: build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::285224135196:role/jsonpath-deploy
+          aws-region: us-west-2
+
+      - name: Copy files to the website with the AWS CLI
+        run: |
+          aws s3 sync build s3://ashphy-deploy-test
 
   push_to_registry:
     name: Push Docker image to Docker Hub
